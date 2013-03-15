@@ -25,6 +25,9 @@ public class TestGetInfoFromSpring
 		Assert.assertTrue(SpringAuthenticationFetcher.isAvailable());
 		final Authentication auth = SpringAuthenticationFetcher.getAuthentication(Authentication.class);
 		Assert.assertEquals(expectedAuth, auth);
+		
+		final String username = SpringAuthenticationFetcher.getUsername();
+		Assert.assertEquals(expectedAuth.getName(), username);
 	}
 	
 	@Test
