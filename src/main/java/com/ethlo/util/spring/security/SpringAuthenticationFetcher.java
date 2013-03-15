@@ -10,13 +10,10 @@ import java.security.Principal;
  */
 public class SpringAuthenticationFetcher
 {
-	//private static final Logger logger = LoggerFactory.getLogger(SpringAuthenticationFetcher.class);
 	private static final String securityContextHolderClassname = "org.springframework.security.core.context.SecurityContextHolder";
 	private static final String securityContextClassname = "org.springframework.security.core.context.SecurityContext";
-	//private static final String authenticationClassname = "org.springframework.security.core.Authentication";
 	private static Method getContextMethod;
 	private static Method getAuthMethod;
-	private static boolean available = true;
 	
 	private SpringAuthenticationFetcher()
 	{
@@ -25,17 +22,20 @@ public class SpringAuthenticationFetcher
 	
 	static
 	{
-		try
+		if (isAvailable())
 		{
-			final Class<?> securityContextHolderClass = Class.forName(securityContextHolderClassname, false, SpringAuthenticationFetcher.class.getClassLoader());
-			getContextMethod = securityContextHolderClass.getMethod("getContext", new Class<?>[0]);
-			
-		    final Class<?> securityContextClass = Class.forName(securityContextClassname, false, SpringAuthenticationFetcher.class.getClassLoader());
-			getAuthMethod = securityContextClass.getDeclaredMethod("getAuthentication", new Class<?>[0]);
-		}
-		catch (Exception exc)
-		{
-			available = false;
+			try
+			{
+				final Class<?> securityContextHolderClass = Class.forName(securityContextHolderClassname, false, SpringAuthenticationFetcher.class.getClassLoader());
+				getContextMethod = securityContextHolderClass.getMethod("getContext", new Class<?>[0]);
+				
+			    final Class<?> securityContextClass = Class.forName(securityContextClassname, false, SpringAuthenticationFetcher.class.getClassLoader());
+				getAuthMethod = securityContextClass.getDeclaredMethod("getAuthentication", new Class<?>[0]);
+			}
+			catch (Exception exc)
+			{
+				throw new RuntimeException(exc);
+			}
 		}
 	}
 	
@@ -55,7 +55,15 @@ public class SpringAuthenticationFetcher
 	
 	public static boolean isAvailable()
 	{
-		return available;
+		try
+		{
+			Class.forName(securityContextHolderClassname, false, SpringAuthenticationFetcher.class.getClassLoader());
+			return true;
+		}
+		catch (ClassNotFoundException exc)
+		{
+			return false;
+		}
 	}
 	
 	public static String getUsername()
