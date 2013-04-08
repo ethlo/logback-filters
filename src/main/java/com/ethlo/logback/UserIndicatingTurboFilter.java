@@ -6,6 +6,8 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -26,30 +28,30 @@ import com.ethlo.util.spring.security.SpringAuthenticationFetcher;
 public class UserIndicatingTurboFilter extends TurboFilter
 {
 	private final org.slf4j.Logger systemLogger = LoggerFactory.getLogger(UserIndicatingTurboFilter.class);
-	private String prefix = "";
-	private String[] extraPropertyNames;
+	private Map<String, String> extraProperties;
 
 	@Override
 	public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t)
 	{
 		MDC.put("username", SpringAuthenticationFetcher.isAvailable() ? SpringAuthenticationFetcher.getUsername() : "?");
 		
-		if (SpringAuthenticationFetcher.isAvailable() && extraPropertyNames != null)
+		if (SpringAuthenticationFetcher.isAvailable() && extraProperties != null)
 		{
 			final Object auth = SpringAuthenticationFetcher.getAuthentication(Object.class);
 			if (auth != null)
 			{
-				for (String extraPropertyName : extraPropertyNames)
+				for (Entry<String, String> extraProperty : extraProperties.entrySet())
 				{
 					try
 					{
 						final BeanInfo info = Introspector.getBeanInfo(auth.getClass());
 						final PropertyDescriptor[] pds = info.getPropertyDescriptors();
-						final Method m = findMethod(extraPropertyName, pds);
+						final String beanProperty = extraProperty.getValue();
+						final Method m = findMethod(beanProperty, pds);
 						if (m != null)
 						{
 							final Object extraPropertyValue = m.invoke(auth, new Object[0]);
-							MDC.put(prefix + extraPropertyName, extraPropertyValue.toString());
+							MDC.put(extraProperty.getKey(), extraPropertyValue.toString());
 						}
 					}
 					catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException exc)
@@ -75,13 +77,8 @@ public class UserIndicatingTurboFilter extends TurboFilter
 		return null;
 	}
 
-	public void setPrefix(String prefix)
+	public void setExtraProperties(Map<String, String> extraProperties)
 	{
-		this.prefix = prefix;
-	}
-
-	public void setExtraPropertyNames(String[] extraPropertyNames)
-	{
-		this.extraPropertyNames = extraPropertyNames;
+		this.extraProperties = extraProperties;
 	}
 }
