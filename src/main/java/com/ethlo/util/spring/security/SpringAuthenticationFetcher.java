@@ -14,6 +14,7 @@ public class SpringAuthenticationFetcher
 	private static final String securityContextClassname = "org.springframework.security.core.context.SecurityContext";
 	private static Method getContextMethod;
 	private static Method getAuthMethod;
+	private static final boolean available = isAvailable();
 	
 	private SpringAuthenticationFetcher()
 	{
@@ -22,7 +23,7 @@ public class SpringAuthenticationFetcher
 	
 	static
 	{
-		if (isAvailable())
+		if (available)
 		{
 			try
 			{
@@ -55,15 +56,7 @@ public class SpringAuthenticationFetcher
 	
 	public static boolean isAvailable()
 	{
-		try
-		{
-			Class.forName(securityContextHolderClassname, false, SpringAuthenticationFetcher.class.getClassLoader());
-			return true;
-		}
-		catch (ClassNotFoundException exc)
-		{
-			return false;
-		}
+		return available;
 	}
 	
 	public static String getUsername()
